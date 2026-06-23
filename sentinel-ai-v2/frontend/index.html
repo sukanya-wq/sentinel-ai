@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sentinel AI — Surveillance Platform v2</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;400;500;600;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#060d1a;--bg2:#0a1628;--bg3:#0f1e38;
+  --panel:#0d1a30;--panel2:#111f35;
+  --border:#1e3a5f;--border2:#2a4a6e;--border3:#1a3050;
+  --red:#e63946;--green:#22c55e;--blue:#38bdf8;--amber:#f59e0b;--purple:#a855f7;--orange:#f97316;
+  --text:#e8f0fe;--text2:#a8c0dc;--text3:#6a8aaa;--text4:#3d6080;
+  --font:'Exo 2',sans-serif;--mono:'Share Tech Mono',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px;min-height:100vh;overflow-x:hidden}
+
+/* ── LAYOUT ── */
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:210px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:50px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0}
+.content{flex:1;overflow-y:auto;overflow-x:hidden;padding:12px}
+
+/* ── SIDEBAR ── */
+.logo-area{padding:14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--red),#c1121f);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.logo-text{font-size:13px;font-weight:700;letter-spacing:2px}
+.logo-sub{font-size:8px;color:var(--text3);letter-spacing:3px;font-family:var(--mono)}
+.nav-section{padding:10px 0}
+.nav-label{padding:3px 14px;font-size:8px;letter-spacing:3px;color:var(--text4);font-family:var(--mono);margin-bottom:3px;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 14px;cursor:pointer;transition:all .15s;border-left:2px solid transparent;color:var(--text2);font-size:12px;font-weight:500}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:rgba(230,57,70,0.1);border-left-color:var(--red);color:var(--text)}
+.nav-icon{width:15px;height:15px;flex-shrink:0;opacity:.7}
+.nav-item.active .nav-icon,.nav-item:hover .nav-icon{opacity:1}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:8px;padding:1px 5px;border-radius:8px;font-family:var(--mono)}
+.nav-badge.g{background:#1a7a3a}
+.sidebar-footer{margin-top:auto;padding:10px 14px;border-top:1px solid var(--border);font-size:9px;font-family:var(--mono);color:var(--text3)}
+.sdot{display:inline-block;width:5px;height:5px;border-radius:50%;margin-right:4px}
+.sdot.on{background:var(--green);animation:blk 1.2s infinite}
+.sdot.alert{background:var(--red);animation:blk .8s infinite}
+
+/* ── TOPBAR ── */
+.topbar-title{font-size:12px;font-weight:600;letter-spacing:1px;flex:1}
+.pill{padding:3px 9px;border-radius:20px;font-size:9px;font-family:var(--mono);font-weight:600;letter-spacing:.5px;border:1px solid}
+.pill.g{background:rgba(34,197,94,.1);border-color:var(--green);color:var(--green)}
+.pill.r{background:rgba(230,57,70,.1);border-color:var(--red);color:var(--red);animation:blk 1.5s infinite}
+.pill.b{background:rgba(56,189,248,.1);border-color:var(--blue);color:var(--blue)}
+.pill.a{background:rgba(245,158,11,.1);border-color:var(--amber);color:var(--amber)}
+.topbar-time{font-family:var(--mono);font-size:11px;color:var(--text2)}
+.tbtn{padding:5px 11px;background:transparent;border:1px solid var(--border2);border-radius:5px;color:var(--text2);font-size:10px;cursor:pointer;transition:all .2s;font-family:var(--font)}
+.tbtn:hover{background:var(--bg3);border-color:var(--red);color:var(--red)}
+
+/* ── PAGES ── */
+.page{display:none}.page.active{display:block}
+
+/* ── GRIDS ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+
+/* ── CARDS ── */
+.card{background:var(--panel);border:1px solid var(--border);border-radius:9px;overflow:hidden}
+.card-h{padding:9px 13px;border-bottom:1px solid var(--border3);display:flex;align-items:center;gap:7px}
+.card-t{font-size:10px;font-weight:600;letter-spacing:1.5px;color:var(--text2);text-transform:uppercase;font-family:var(--mono)}
+.card-b{padding:13px}
+.stat-card{background:var(--panel2);border:1px solid var(--border);border-radius:9px;padding:13px 15px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.stat-card.r::before{background:linear-gradient(90deg,var(--red),transparent)}
+.stat-card.g::before{background:linear-gradient(90deg,var(--green),transparent)}
+.stat-card.b::before{background:linear-gradient(90deg,var(--blue),transparent)}
+.stat-card.a::before{background:linear-gradient(90deg,var(--amber),transparent)}
+.stat-label{font-size:9px;color:var(--text3);letter-spacing:2px;font-family:var(--mono);margin-bottom:5px;text-transform:uppercase}
+.stat-val{font-size:24px;font-weight:700;font-family:var(--mono)}
+.stat-val.r{color:var(--red)}.stat-val.g{color:var(--green)}.stat-val.b{color:var(--blue)}.stat-val.a{color:var(--amber)}
+.stat-sub{font-size:9px;color:var(--text3);margin-top:3px}
+
+/* ── TICKER ── */
+.ticker{background:rgba(230,57,70,.07);border-top:1px solid rgba(230,57,70,.18);height:26px;display:flex;align-items:center;overflow:hidden;flex-shrink:0}
+.ticker-lbl{padding:0 10px;font-size:8px;font-family:var(--mono);color:var(--red);font-weight:700;letter-spacing:2px;flex-shrink:0;border-right:1px solid rgba(230,57,70,.25)}
+.ticker-inner{overflow:hidden;flex:1}
+.ticker-track{display:flex;white-space:nowrap;animation:ticker 38s linear infinite;width:max-content}
+.ticker-item{font-size:9px;font-family:var(--mono);color:var(--text2);padding:0 24px;opacity:.8}
+.ticker-item span{color:var(--red);margin-right:4px}
+
+/* ── CCTV GRID ── */
+.cctv-main{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px}
+.cctv-cell{position:relative;border-radius:4px;overflow:hidden;border:1px solid var(--border);cursor:pointer;transition:border-color .2s}
+.cctv-cell:hover{border-color:var(--blue)}
+.cctv-cell.kidnap{border-color:var(--red);box-shadow:0 0 7px rgba(230,57,70,.3)}
+.cctv-cell.theft{border-color:var(--purple);box-shadow:0 0 7px rgba(168,85,247,.25)}
+.cctv-cell.harass{border-color:var(--amber);box-shadow:0 0 7px rgba(245,158,11,.25)}
+.cctv-cell.stolen{border-color:var(--orange);box-shadow:0 0 7px rgba(249,115,22,.25)}
+.cctv-cell canvas{display:block;width:100%;aspect-ratio:16/9}
+.cctv-ov{position:absolute;inset:0;pointer-events:none}
+.cam-badge{position:absolute;top:4px;left:4px;font-size:6px;padding:2px 4px;border-radius:2px;font-weight:bold;letter-spacing:.5px}
+.cam-badge.kidnap{background:rgba(230,57,70,.93);color:#fff;animation:blk .7s infinite}
+.cam-badge.theft{background:rgba(168,85,247,.9);color:#fff;animation:blk .85s infinite}
+.cam-badge.harass{background:rgba(245,158,11,.9);color:#000;animation:blk .95s infinite}
+.cam-badge.stolen{background:rgba(249,115,22,.9);color:#fff;animation:blk .8s infinite}
+.cam-dot{position:absolute;top:4px;right:4px;width:5px;height:5px;border-radius:50%;background:var(--red);animation:blk .6s infinite}
+.cam-id{position:absolute;bottom:4px;left:4px;font-size:6px;color:rgba(200,220,240,.6);background:rgba(0,0,0,.5);padding:1px 3px;border-radius:1px;font-family:var(--mono)}
+.cam-loc{position:absolute;bottom:4px;right:4px;font-size:6px;color:rgba(160,200,220,.4);background:rgba(0,0,0,.45);padding:1px 3px;border-radius:1px;font-family:var(--mono)}
+.cam-scan{position:absolute;left:0;right:0;height:1px;background:rgba(56,189,248,.18);animation:scn 2.6s linear infinite;pointer-events:none}
+
+/* ── MISC ── */
+.section-title{font-size:9px;letter-spacing:2px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;margin-bottom:7px}
+.divider{height:1px;background:var(--border3);margin:11px 0}
+.tag{display:inline-block;font-size:8px;font-family:var(--mono);padding:2px 5px;border-radius:3px;background:var(--bg3);border:1px solid var(--border2);color:var(--text3);margin-right:3px}
+.tag.r{background:rgba(230,57,70,.1);border-color:rgba(230,57,70,.3);color:var(--red)}
+.tag.a{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3);color:var(--amber)}
+.tag.p{background:rgba(168,85,247,.1);border-color:rgba(168,85,247,.3);color:var(--purple)}
+.risk-badge{display:inline-block;font-size:8px;font-family:var(--mono);padding:2px 6px;border-radius:9px;font-weight:700}
+.risk-badge.critical{background:rgba(230,57,70,.2);color:var(--red);border:1px solid rgba(230,57,70,.4)}
+.risk-badge.high{background:rgba(245,158,11,.2);color:var(--amber);border:1px solid rgba(245,158,11,.4)}
+.risk-badge.medium{background:rgba(56,189,248,.2);color:var(--blue);border:1px solid rgba(56,189,248,.4)}
+.risk-badge.low{background:rgba(34,197,94,.2);color:var(--green);border:1px solid rgba(34,197,94,.4)}
+.alert-item{background:var(--panel2);border:1px solid var(--border);border-radius:7px;padding:9px 11px;margin-bottom:7px;display:flex;align-items:center;gap:9px;animation:fadeIn .3s ease}
+.alert-item.critical{border-left:3px solid var(--red)}.alert-item.high{border-left:3px solid var(--amber)}.alert-item.medium{border-left:3px solid var(--blue)}
+.alert-icon{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px}
+.alert-title{font-size:11px;font-weight:600;color:var(--text);margin-bottom:2px}
+.alert-meta{font-size:9px;color:var(--text3);font-family:var(--mono)}
+.btn{padding:4px 8px;font-size:9px;border-radius:4px;border:1px solid;cursor:pointer;transition:all .15s;font-family:var(--font);font-weight:500}
+.btn.r{background:rgba(230,57,70,.1);border-color:rgba(230,57,70,.4);color:var(--red)}
+.btn.b{background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.4);color:var(--blue)}
+.btn.g{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.4);color:var(--green)}
+.btn.gh{background:transparent;border-color:var(--border2);color:var(--text2)}
+.btn.r:hover{background:rgba(230,57,70,.2)}.btn.b:hover{background:rgba(56,189,248,.2)}.btn.gh:hover{background:var(--bg3)}
+.tbl{width:100%;border-collapse:collapse;font-size:10px}
+.tbl th{text-align:left;padding:6px 9px;border-bottom:1px solid var(--border);color:var(--text3);font-size:8px;letter-spacing:2px;font-family:var(--mono);font-weight:600;text-transform:uppercase}
+.tbl td{padding:7px 9px;border-bottom:1px solid var(--border3);color:var(--text2);vertical-align:middle}
+.tbl tr:hover td{background:rgba(255,255,255,.02)}.tbl tr:last-child td{border-bottom:none}
+.prog-bg{height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px}
+.suspect-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.suspect-card{background:var(--panel2);border:1px solid var(--border);border-radius:7px;padding:11px;cursor:pointer;transition:all .2s;position:relative}
+.suspect-card:hover{border-color:var(--red);background:var(--panel)}
+.suspect-card.wanted{border-color:rgba(230,57,70,.45)}
+.savatar{width:48px;height:48px;border-radius:7px;background:var(--bg3);border:2px solid var(--border2);margin-bottom:7px;display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--text3)}
+.sname{font-size:11px;font-weight:600;color:var(--text);margin-bottom:2px}
+.smeta{font-size:9px;color:var(--text3);font-family:var(--mono);margin-bottom:3px}
+.wanted-stamp{position:absolute;top:7px;right:7px;font-size:7px;font-family:var(--mono);color:var(--red);border:1px solid var(--red);padding:1px 4px;border-radius:2px;transform:rotate(5deg);letter-spacing:1px}
+.tl-item{display:flex;gap:10px;margin-bottom:0}
+.tl-left{display:flex;flex-direction:column;align-items:center;width:26px;flex-shrink:0}
+.tl-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.tl-dot.r{background:var(--red)}.tl-dot.b{background:var(--blue)}.tl-dot.a{background:var(--amber)}.tl-dot.g{background:var(--green)}
+.tl-line{width:1px;flex:1;background:var(--border);margin-top:3px;min-height:22px}
+.tl-right{padding-bottom:14px;flex:1}
+.tl-time{font-size:9px;color:var(--text3);font-family:var(--mono);margin-bottom:2px}
+.tl-event{font-size:11px;color:var(--text);line-height:1.4}
+.tl-cam{font-size:9px;color:var(--text3);margin-top:2px;font-family:var(--mono)}
+.risk-zone{border-radius:7px;padding:7px 9px;margin-bottom:7px;border:1px solid}
+.risk-zone.critical{background:rgba(230,57,70,.07);border-color:rgba(230,57,70,.28)}
+.risk-zone.high{background:rgba(245,158,11,.07);border-color:rgba(245,158,11,.28)}
+.risk-zone.medium{background:rgba(56,189,248,.07);border-color:rgba(56,189,248,.28)}
+.rzh{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px}
+.rzname{font-size:11px;font-weight:600;color:var(--text)}
+.rzpct{font-family:var(--mono);font-size:12px;font-weight:700}
+.rzbar{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+.rzfill{height:100%;border-radius:2px}
+.risk-zone.critical .rzfill{background:var(--red)}.risk-zone.high .rzfill{background:var(--amber)}.risk-zone.medium .rzfill{background:var(--blue)}
+.rzmeta{font-size:8px;color:var(--text3);margin-top:3px;font-family:var(--mono)}
+.ev-item{background:var(--panel2);border:1px solid var(--border);border-radius:7px;padding:9px 11px;display:flex;align-items:center;gap:9px;margin-bottom:5px;cursor:pointer;transition:all .2s}
+.ev-item:hover{border-color:var(--border2);background:var(--panel)}
+.ev-name{font-size:11px;color:var(--text);font-weight:500;margin-bottom:2px}
+.ev-meta{font-size:9px;color:var(--text3);font-family:var(--mono)}
+.chat-area{display:flex;flex-direction:column;height:480px;background:var(--panel);border:1px solid var(--border);border-radius:9px;overflow:hidden}
+.chat-msgs{flex:1;overflow-y:auto;padding:13px;display:flex;flex-direction:column;gap:9px}
+.chat-msg{max-width:85%;padding:7px 11px;border-radius:9px;font-size:11px;line-height:1.5;animation:fadeIn .2s ease}
+.chat-msg.user{background:rgba(56,189,248,.15);border:1px solid rgba(56,189,248,.2);color:var(--text);align-self:flex-end;border-bottom-right-radius:2px}
+.chat-msg.bot{background:var(--panel2);border:1px solid var(--border);color:var(--text2);align-self:flex-start;border-bottom-left-radius:2px}
+.chat-msg.bot strong{color:var(--text)}
+.chat-input-row{padding:9px;border-top:1px solid var(--border);display:flex;gap:7px}
+.chat-in{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:7px;padding:7px 11px;color:var(--text);font-size:11px;font-family:var(--font);outline:none;transition:border-color .2s}
+.chat-in:focus{border-color:var(--blue)}
+.chat-send{padding:7px 13px;background:rgba(56,189,248,.15);border:1px solid rgba(56,189,248,.3);border-radius:7px;color:var(--blue);cursor:pointer;font-size:11px;transition:all .2s}
+.chat-send:hover{background:rgba(56,189,248,.25)}
+.chat-presets{padding:0 9px 9px;display:flex;flex-wrap:wrap;gap:4px}
+.chat-preset{font-size:9px;padding:3px 7px;background:var(--bg3);border:1px solid var(--border2);border-radius:12px;cursor:pointer;color:var(--text3);transition:all .15s;white-space:nowrap}
+.chat-preset:hover{border-color:var(--blue);color:var(--blue)}
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:9999}
+.modal-box{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;width:500px;max-height:88vh;overflow-y:auto}
+.modal-hdr{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:13px;font-weight:600;color:var(--text)}
+.modal-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:17px}
+.modal-close:hover{color:var(--text)}
+.modal-body{padding:18px}
+.scrollable{scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.scrollable::-webkit-scrollbar{width:3px}
+.scrollable::-webkit-scrollbar-track{background:transparent}
+.scrollable::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.chart-wrap{position:relative;width:100%;height:190px}
+.log-panel{background:#050d18;border:1px solid #0e2235;border-radius:4px;padding:6px 10px;margin-top:8px}
+.log-title-sm{font-size:8px;letter-spacing:3px;color:#1a4055;margin-bottom:5px;font-family:var(--mono)}
+.logrow{display:flex;align-items:center;gap:7px;font-size:9px;color:#5a8aaa;padding:2px 0;border-bottom:1px solid #091825}
+.logrow:last-child{border:none}
+.ld{width:4px;height:4px;border-radius:50%;flex-shrink:0}
+.lt{color:#1a4055;min-width:55px;font-family:var(--mono)}
+.lm{flex:1}
+.lc{color:#1a4055;min-width:48px;text-align:right;font-family:var(--mono)}
+
+/* LOGIN */
+.login-page{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg)}
+.login-card{background:var(--bg2);border:1px solid var(--border);border-radius:13px;padding:34px 30px;width:370px;text-align:center}
+.login-logo{width:56px;height:56px;background:linear-gradient(135deg,var(--red),#c1121f);border-radius:13px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:14px}
+.login-title{font-size:19px;font-weight:700;letter-spacing:3px;margin-bottom:3px}
+.login-sub{font-size:9px;color:var(--text3);letter-spacing:3px;font-family:var(--mono);margin-bottom:26px}
+.login-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:7px;padding:9px 13px;color:var(--text);font-size:12px;font-family:var(--font);outline:none;margin-bottom:9px;transition:border-color .2s}
+.login-input:focus{border-color:var(--blue)}
+.login-btn{width:100%;padding:10px;background:linear-gradient(135deg,var(--red),#c1121f);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;letter-spacing:1px;transition:opacity .2s;margin-top:5px;font-family:var(--font)}
+.login-btn:hover{opacity:.9}
+.login-roles{display:flex;gap:7px;margin-top:14px}
+.login-role{flex:1;padding:6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;font-size:9px;text-align:center;cursor:pointer;color:var(--text3);transition:all .15s;font-family:var(--mono)}
+.login-role:hover,.login-role.active{border-color:var(--red);color:var(--red);background:rgba(230,57,70,.1)}
+
+@keyframes blk{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes scn{0%{top:0}100%{top:100%}}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse-r{0%,100%{box-shadow:0 0 0 0 rgba(230,57,70,0)}50%{box-shadow:0 0 0 4px rgba(230,57,70,.2)}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-page" id="loginPage">
+  <div class="login-card">
+    <div class="login-logo">⚡</div>
+    <div class="login-title">SENTINEL AI</div>
+    <div class="login-sub">SURVEILLANCE PLATFORM v2</div>
+    <input class="login-input" type="text" id="lusr" placeholder="Username" value="admin@sentinel.ai">
+    <input class="login-input" type="password" id="lpwd" placeholder="Password" value="sentinel2026">
+    <div style="text-align:left;margin-bottom:10px">
+      <div class="section-title" style="margin-bottom:5px">Role</div>
+      <div class="login-roles">
+        <div class="login-role active" onclick="selRole(this)">ADMIN</div>
+        <div class="login-role" onclick="selRole(this)">OFFICER</div>
+        <div class="login-role" onclick="selRole(this)">INVESTIGATOR</div>
+      </div>
+    </div>
+    <button class="login-btn" onclick="doLogin()">AUTHENTICATE →</button>
+    <div style="margin-top:12px;font-size:9px;color:var(--text4);font-family:var(--mono)">SENTINEL AI v2.0 · AUTHORIZED USE ONLY</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="appMain" style="display:none">
+  <nav class="sidebar scrollable">
+    <div class="logo-area">
+      <div class="logo-icon">⚡</div>
+      <div><div class="logo-text">SENTINEL</div><div class="logo-sub">AI v2.0</div></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Monitoring</div>
+      <div class="nav-item active" onclick="goPage('dashboard',this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg><span>Dashboard</span></div>
+      <div class="nav-item" onclick="goPage('cctv',this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.258a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg><span>Live CCTV (8 Feeds)</span><span class="nav-badge g">8</span></div>
+      <div class="nav-item" onclick="goPage('alerts',this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg><span>Alert Center</span><span class="nav-badge">7</span></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Intelligence</div>
+      <div class="nav-item" onclick="goPage('suspects',this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg><span>Suspect DB</span></div>
+      <div class="nav-item" onclick="goPage('victims',this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 10-16 0"/></svg><span>Missing Persons</span></div>
+      <div class="nav-item" onclick="goPage('network',this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg><span>Criminal Network</span></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Analysis</div>
+      <div class="nav-item" onclick="goPage('risk',this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg><span>Risk Prediction</span></div>
+      <div class="nav-item" onclick="goPage('timeline',this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Detection History</span></div>
+      <div class="nav-item" onclick="goPage('map',this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg><span>Surveillance Map</span></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Case Mgmt</div>
+      <div class="nav-item" onclick="goPage('reports',this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Incident Reports</span></div>
+      <div class="nav-item" onclick="goPage('evidence',this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg><span>Evidence Storage</span></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Tools</div>
+      <div class="nav-item" onclick="goPage('assistant',this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span>AI Assistant</span></div>
+      <div class="nav-item" onclick="goPage('settings',this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg><span>Settings</span></div>
+    </div>
+    <div class="sidebar-footer">
+      <div><span class="sdot on"></span>SYSTEM ONLINE</div>
+      <div style="margin-top:3px"><span class="sdot alert"></span>4 ACTIVE THREATS</div>
+      <div style="margin-top:5px;color:var(--text4)" id="sbTime"></div>
+    </div>
+  </nav>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="pageTitle">DASHBOARD</div>
+      <div style="display:flex;gap:7px">
+        <div class="pill g">LIVE</div>
+        <div class="pill b">AI ON</div>
+        <div class="pill r">4 THREATS</div>
+        <div class="pill a">72% RISK</div>
+      </div>
+      <div class="topbar-time" id="topTime"></div>
+      <button class="tbtn" onclick="showModal('alert')">🔔 Alerts</button>
+      <button class="tbtn" onclick="doLogout()">⏻ Logout</button>
+    </div>
+    <div class="ticker">
+      <div class="ticker-lbl">⚠ ALERT</div>
+      <div class="ticker-inner">
+        <div class="ticker-track">
+          <span class="ticker-item"><span>KIDNAPPING</span> Suspect dragging victim · CAM-01 Platform Entry · 14:32:18 · Confidence 96%</span>
+          <span class="ticker-item"><span>THEFT</span> Pickpocket confirmed · CAM-02 Car Park · 14:31:04 · Confidence 89%</span>
+          <span class="ticker-item"><span>HARASSMENT</span> Two suspects cornering victim · CAM-03 Main Hall · 14:29:47 · Confidence 84%</span>
+          <span class="ticker-item"><span>BAG STOLEN</span> Suspect fleeing with luggage · CAM-04 Side Passage · 14:28:22 · Confidence 92%</span>
+          <span class="ticker-item"><span>KIDNAPPING</span> Child separation detected · CAM-05 Tunnel Exit · 14:26:11 · Confidence 95%</span>
+          <span class="ticker-item"><span>THEFT</span> Repeat proximity pattern · CAM-06 Ticket Area · 14:24:38 · Confidence 81%</span>
+          <span class="ticker-item"><span>KIDNAPPING</span> Suspect dragging victim · CAM-01 Platform Entry · 14:32:18 · Confidence 96%</span>
+          <span class="ticker-item"><span>THEFT</span> Pickpocket confirmed · CAM-02 Car Park · 14:31:04 · Confidence 89%</span>
+          <span class="ticker-item"><span>HARASSMENT</span> Two suspects cornering victim · CAM-03 Main Hall · 14:29:47 · Confidence 84%</span>
+          <span class="ticker-item"><span>BAG STOLEN</span> Suspect fleeing with luggage · CAM-04 Side Passage · 14:28:22 · Confidence 92%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="content scrollable" id="pageContent">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="g5" style="margin-bottom:12px">
+          <div class="stat-card b"><div class="stat-label">Active Cameras</div><div class="stat-val b">8</div><div class="stat-sub">All feeds live</div></div>
+          <div class="stat-card r"><div class="stat-label">Threats Active</div><div class="stat-val r">4</div><div class="stat-sub">↑ 2 from last hour</div></div>
+          <div class="stat-card a"><div class="stat-label">Alerts Today</div><div class="stat-val a">18</div><div class="stat-sub">7 unreviewed</div></div>
+          <div class="stat-card g"><div class="stat-label">Cases Active</div><div class="stat-val g">5</div><div class="stat-sub">2 escalated</div></div>
+          <div class="stat-card b"><div class="stat-label">AI Accuracy</div><div class="stat-val b">94%</div><div class="stat-sub">avg confidence</div></div>
+        </div>
+        <div class="g2" style="margin-bottom:12px">
+          <div class="card"><div class="card-h"><span class="card-t">Detection Trend — 7 Days</span></div><div class="card-b"><div class="chart-wrap"><canvas id="detChart"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><span class="card-t">Threat Breakdown</span></div><div class="card-b"><div class="chart-wrap"><canvas id="threatChart"></canvas></div></div></div>
+        </div>
+        <div class="g2">
+          <div class="card">
+            <div class="card-h"><span class="card-t">Live Activity</span><div class="pill g" style="margin-left:auto;font-size:8px">LIVE</div></div>
+            <div class="card-b" id="liveActivity"></div>
+          </div>
+          <div class="card">
+            <div class="card-h"><span class="card-t">Risk Zones</span></div>
+            <div class="card-b">
+              <div class="risk-zone critical"><div class="rzh"><span class="rzname">Central Railway Station</span><span class="rzpct" style="color:var(--red)">72%</span></div><div class="rzbar"><div class="rzfill" style="width:72%"></div></div><div class="rzmeta">PEAK: 21:00–00:00 · HIGH TRAFFIC</div></div>
+              <div class="risk-zone high"><div class="rzh"><span class="rzname">Bus Terminal Sector 4</span><span class="rzpct" style="color:var(--amber)">61%</span></div><div class="rzbar"><div class="rzfill" style="width:61%"></div></div><div class="rzmeta">PEAK: 18:00–22:00 · HOTSPOT</div></div>
+              <div class="risk-zone medium"><div class="rzh"><span class="rzname">Airport Terminal 2</span><span class="rzpct" style="color:var(--blue)">44%</span></div><div class="rzbar"><div class="rzfill" style="width:44%"></div></div><div class="rzmeta">PEAK: 02:00–06:00 · NIGHT FLIGHTS</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CCTV -->
+      <div class="page" id="page-cctv">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <div class="section-title" style="margin-bottom:0">8 Live Feeds — AI Threat Detection Active</div>
+          <div class="pill g" style="margin-left:auto">ALL CAMS ONLINE</div>
+          <div class="pill r">4 THREATS</div>
+        </div>
+        <div class="cctv-main" id="cctvGrid"></div>
+        <div class="log-panel"><div class="log-title-sm">REAL-TIME DETECTION LOG</div><div id="camLog"></div></div>
+        <div style="margin-top:10px" class="card">
+          <div class="card-h"><span class="card-t">Detection Events</span></div>
+          <div class="card-b">
+            <table class="tbl">
+              <thead><tr><th>Time</th><th>Camera</th><th>Threat Type</th><th>Subject</th><th>Confidence</th><th>Risk</th><th>Action</th></tr></thead>
+              <tbody>
+                <tr><td style="font-family:var(--mono);color:var(--text3)">14:32:18</td><td>CAM-01</td><td><span class="tag r">KIDNAPPING</span></td><td>Suspect + Victim</td><td style="color:var(--green)">96%</td><td><span class="risk-badge critical">CRITICAL</span></td><td><button class="btn r" onclick="showModal('suspect')">View</button></td></tr>
+                <tr><td style="font-family:var(--mono);color:var(--text3)">14:31:04</td><td>CAM-02</td><td><span class="tag p">THEFT</span></td><td>Unknown Male</td><td style="color:var(--green)">89%</td><td><span class="risk-badge high">HIGH</span></td><td><button class="btn b" onclick="showModal('alert')">Alert</button></td></tr>
+                <tr><td style="font-family:var(--mono);color:var(--text3)">14:29:47</td><td>CAM-03</td><td><span class="tag a">HARASSMENT</span></td><td>2 Suspects / 1 Victim</td><td style="color:var(--amber)">84%</td><td><span class="risk-badge high">HIGH</span></td><td><button class="btn r">Dispatch</button></td></tr>
+                <tr><td style="font-family:var(--mono);color:var(--text3)">14:28:22</td><td>CAM-04</td><td><span class="tag a">BAG STOLEN</span></td><td>Running Suspect</td><td style="color:var(--green)">92%</td><td><span class="risk-badge critical">CRITICAL</span></td><td><button class="btn r">Dispatch</button></td></tr>
+                <tr><td style="font-family:var(--mono);color:var(--text3)">14:26:11</td><td>CAM-05</td><td><span class="tag r">KIDNAPPING</span></td><td>Child + Adult</td><td style="color:var(--green)">95%</td><td><span class="risk-badge critical">CRITICAL</span></td><td><button class="btn r">Dispatch</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALERTS -->
+      <div class="page" id="page-alerts">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:10px">
+          <div class="section-title" style="margin-bottom:0">Alert Center — 7 Active</div>
+          <button class="btn r" style="margin-left:auto">Escalate All</button>
+          <button class="btn gh">Mark Read</button>
+        </div>
+        <div class="alert-item critical"><div class="alert-icon" style="background:rgba(230,57,70,.2)">🚨</div><div style="flex:1"><div class="alert-title">Kidnapping — Victim Being Dragged</div><div class="alert-meta">CAM-01 · Platform Entry · Confidence 96% · AI behavior match</div></div><div style="display:flex;gap:5px"><button class="btn r">Dispatch</button><button class="btn b">Report</button></div><div style="margin-left:8px;font-size:9px;color:var(--text4);font-family:var(--mono);flex-shrink:0">14:32:18</div></div>
+        <div class="alert-item critical"><div class="alert-icon" style="background:rgba(249,115,22,.2)">🏃</div><div style="flex:1"><div class="alert-title">Bag Snatched — Suspect Fleeing</div><div class="alert-meta">CAM-04 · Side Passage · Suspect running east · Confidence 92%</div></div><div style="display:flex;gap:5px"><button class="btn r">Dispatch</button><button class="btn gh">Dismiss</button></div><div style="margin-left:8px;font-size:9px;color:var(--text4);font-family:var(--mono);flex-shrink:0">14:28:22</div></div>
+        <div class="alert-item critical"><div class="alert-icon" style="background:rgba(230,57,70,.2)">👶</div><div style="flex:1"><div class="alert-title">Child Separation — Kidnapping Risk</div><div class="alert-meta">CAM-05 · Tunnel Exit · Adult coercion detected · Confidence 95%</div></div><div style="display:flex;gap:5px"><button class="btn r">Dispatch</button><button class="btn b">Report</button></div><div style="margin-left:8px;font-size:9px;color:var(--text4);font-family:var(--mono);flex-shrink:0">14:26:11</div></div>
+        <div class="alert-item high"><div class="alert-icon" style="background:rgba(168,85,247,.2)">👜</div><div style="flex:1"><div class="alert-title">Pickpocket Confirmed — Ticket Area</div><div class="alert-meta">CAM-06 · Ticket Area · Pocket reach gesture · Confidence 81%</div></div><div style="display:flex;gap:5px"><button class="btn b">Monitor</button></div><div style="margin-left:8px;font-size:9px;color:var(--text4);font-family:var(--mono);flex-shrink:0">14:24:38</div></div>
+        <div class="alert-item high"><div class="alert-icon" style="background:rgba(245,158,11,.2)">⚠️</div><div style="flex:1"><div class="alert-title">Harassment — Two Suspects Cornering Victim</div><div class="alert-meta">CAM-03 · Main Hall · Block-and-grab pattern · Confidence 84%</div></div><div style="display:flex;gap:5px"><button class="btn r">Dispatch</button></div><div style="margin-left:8px;font-size:9px;color:var(--text4);font-family:var(--mono);flex-shrink:0">14:29:47</div></div>
+        <div class="alert-item medium"><div class="alert-icon" style="background:rgba(168,85,247,.2)">🔍</div><div style="flex:1"><div class="alert-title">Repeat Proximity Pattern — Theft Behaviour</div><div class="alert-meta">CAM-02 · Car Park · Suspect orbiting victim · Confidence 89%</div></div><div style="display:flex;gap:5px"><button class="btn b">Monitor</button></div><div style="margin-left:8px;font-size:9px;color:var(--text4);font-family:var(--mono);flex-shrink:0">14:31:04</div></div>
+        <div class="alert-item medium"><div class="alert-icon" style="background:rgba(245,158,11,.2)">📍</div><div style="flex:1"><div class="alert-title">High-Risk Zone — Station Peak Hours</div><div class="alert-meta">Predictive AI · Railway Station · 72% trafficking risk tonight</div></div><div style="display:flex;gap:5px"><button class="btn b">View Map</button></div><div style="margin-left:8px;font-size:9px;color:var(--text4);font-family:var(--mono);flex-shrink:0">14:00:00</div></div>
+      </div>
+
+      <!-- SUSPECTS -->
+      <div class="page" id="page-suspects">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:10px">
+          <div class="section-title" style="margin-bottom:0">Suspect Database — 24 Records</div>
+          <button class="btn b" style="margin-left:auto">+ Add Suspect</button>
+          <input style="background:var(--bg3);border:1px solid var(--border2);border-radius:5px;padding:4px 9px;color:var(--text);font-size:10px;outline:none;width:150px" placeholder="Search...">
+        </div>
+        <div class="suspect-grid">
+          <div class="suspect-card wanted" onclick="showModal('suspect')"><div class="wanted-stamp">WANTED</div><div class="savatar">👤</div><div class="sname">Ramesh Kumar</div><div class="smeta">#S-0041 · M · 34 · KIDNAPPING</div><div class="smeta" style="margin-bottom:5px">Last: CAM-01 · 14:32</div><span class="risk-badge critical">CRITICAL</span></div>
+          <div class="suspect-card" onclick="showModal('suspect')"><div class="savatar">👤</div><div class="sname">Priya Menon</div><div class="smeta">#S-0038 · F · 28 · THEFT</div><div class="smeta" style="margin-bottom:5px">Last: CAM-02 · 14:31</div><span class="risk-badge high">HIGH</span></div>
+          <div class="suspect-card"><div class="savatar">👤</div><div class="sname">Suresh Babu</div><div class="smeta">#S-0029 · M · 42 · HARASSMENT</div><div class="smeta" style="margin-bottom:5px">Last: CAM-03 · 14:29</div><span class="risk-badge high">HIGH</span></div>
+          <div class="suspect-card"><div class="savatar">👤</div><div class="sname">Meena Krishnan</div><div class="smeta">#S-0022 · F · 31 · STOLEN</div><div class="smeta" style="margin-bottom:5px">Last: CAM-04 · 14:28</div><span class="risk-badge medium">MEDIUM</span></div>
+          <div class="suspect-card"><div class="savatar">👤</div><div class="sname">Arjun Rao</div><div class="smeta">#S-0017 · M · 39 · THEFT</div><div class="smeta" style="margin-bottom:5px">Last: CAM-06 · 14:24</div><span class="risk-badge medium">MEDIUM</span></div>
+          <div class="suspect-card"><div class="savatar">👤</div><div class="sname">Fatima Sheikh</div><div class="smeta">#S-0014 · F · 26 · HARASS</div><div class="smeta" style="margin-bottom:5px">Last: CAM-07 · Yesterday</div><span class="risk-badge low">LOW</span></div>
+        </div>
+      </div>
+
+      <!-- MISSING PERSONS -->
+      <div class="page" id="page-victims">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:10px">
+          <div class="section-title" style="margin-bottom:0">Missing Persons — 38 Cases</div>
+          <button class="btn a" style="margin-left:auto">+ Add Case</button>
+        </div>
+        <table class="tbl" style="background:var(--panel);border-radius:9px;border:1px solid var(--border)">
+          <thead><tr><th>Case ID</th><th>Name</th><th>Age</th><th>Missing Since</th><th>Last Location</th><th>Status</th><th>CCTV Match</th></tr></thead>
+          <tbody>
+            <tr style="background:rgba(230,57,70,.04)"><td style="font-family:var(--mono);color:var(--blue)">#2847</td><td><strong>Sunita Devi</strong></td><td>16</td><td>15 Mar 2026</td><td>Central Station</td><td><span class="pill r" style="padding:2px 5px">ACTIVE</span></td><td style="color:var(--amber);font-family:var(--mono);font-size:10px">81.3% CAM-01 ⚠</td></tr>
+            <tr><td style="font-family:var(--mono);color:var(--blue)">#2839</td><td>Kavita Sharma</td><td>19</td><td>10 Mar 2026</td><td>Bus Terminal</td><td><span class="pill r" style="padding:2px 5px">ACTIVE</span></td><td style="color:var(--text3)">No match</td></tr>
+            <tr><td style="font-family:var(--mono);color:var(--blue)">#2831</td><td>Ravi Teja</td><td>14</td><td>5 Mar 2026</td><td>Industrial Zone</td><td><span class="pill a" style="padding:2px 5px;font-size:8px">PENDING</span></td><td style="color:var(--text3)">No match</td></tr>
+            <tr><td style="font-family:var(--mono);color:var(--blue)">#2815</td><td>Anand Kumar</td><td>17</td><td>22 Feb 2026</td><td>Railway Station</td><td><span class="pill g" style="padding:2px 5px;font-size:8px">LOCATED</span></td><td style="color:var(--green);font-family:var(--mono);font-size:10px">FOUND SAFE</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- NETWORK -->
+      <div class="page" id="page-network">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:10px">
+          <div class="section-title" style="margin-bottom:0">Criminal Network — N-004</div>
+          <div class="pill a" style="margin-left:auto">7 SUSPECTS · 12 VICTIMS</div>
+        </div>
+        <div class="card" style="margin-bottom:10px">
+          <div class="card-h"><span class="card-t">Interactive Network Graph — Drag nodes</span></div>
+          <div class="card-b" style="padding:0"><canvas id="netCanvas" style="width:100%;height:380px;display:block;cursor:grab;background:#040a12"></canvas></div>
+        </div>
+        <div class="g3">
+          <div class="card"><div class="card-h"><span class="card-t">Legend</span></div><div class="card-b"><div style="display:flex;flex-direction:column;gap:7px"><div style="display:flex;align-items:center;gap:7px"><div style="width:11px;height:11px;border-radius:50%;background:var(--red)"></div><span style="font-size:10px">Suspect</span></div><div style="display:flex;align-items:center;gap:7px"><div style="width:11px;height:11px;border-radius:50%;background:var(--amber)"></div><span style="font-size:10px">Victim</span></div><div style="display:flex;align-items:center;gap:7px"><div style="width:11px;height:11px;border-radius:50%;background:var(--blue)"></div><span style="font-size:10px">Incident</span></div><div style="display:flex;align-items:center;gap:7px"><div style="width:11px;height:11px;border-radius:2px;background:var(--green)"></div><span style="font-size:10px">Leader</span></div></div></div></div>
+          <div class="card"><div class="card-h"><span class="card-t">Stats</span></div><div class="card-b"><div style="display:flex;flex-direction:column;gap:7px"><div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:var(--text2)">Connections</span><span style="font-family:var(--mono);color:var(--blue)">23</span></div><div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:var(--text2)">Active Suspects</span><span style="font-family:var(--mono);color:var(--red)">7</span></div><div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:var(--text2)">Known Victims</span><span style="font-family:var(--mono);color:var(--amber)">12</span></div><div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:var(--text2)">Density</span><span style="font-family:var(--mono);color:var(--red)">HIGH</span></div></div></div></div>
+          <div class="card"><div class="card-h"><span class="card-t">Key Intel</span></div><div class="card-b"><div style="font-size:10px;color:var(--text2);line-height:1.7">Network N-004 operates across Central Station, Bus Terminal &amp; Industrial Zone. Leader: <span style="color:var(--red)">Suresh Babu</span>. Route: <span style="color:var(--amber)">Cross-border via Airport T2</span>.</div></div></div>
+        </div>
+      </div>
+
+      <!-- RISK -->
+      <div class="page" id="page-risk">
+        <div class="section-title">Risk Prediction — XGBoost ML v3.2</div>
+        <div class="g3" style="margin-bottom:12px">
+          <div class="stat-card r"><div class="stat-label">Highest Risk</div><div class="stat-val r" style="font-size:17px">Station</div><div class="stat-sub">72% tonight</div></div>
+          <div class="stat-card a"><div class="stat-label">Peak Hour</div><div class="stat-val a" style="font-size:17px">21:00</div><div class="stat-sub">–midnight</div></div>
+          <div class="stat-card b"><div class="stat-label">Model Accuracy</div><div class="stat-val b" style="font-size:17px">89%</div><div class="stat-sub">XGBoost</div></div>
+        </div>
+        <div class="g2" style="margin-bottom:12px">
+          <div class="card"><div class="card-h"><span class="card-t">24-Hour Risk Heatmap</span></div><div class="card-b"><div class="chart-wrap"><canvas id="riskChart"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><span class="card-t">Zone Scores</span></div><div class="card-b"><div class="chart-wrap"><canvas id="zoneChart"></canvas></div></div></div>
+        </div>
+      </div>
+
+      <!-- TIMELINE -->
+      <div class="page" id="page-timeline">
+        <div class="section-title">Detection History — Case #2847</div>
+        <div class="g2">
+          <div class="card"><div class="card-h"><span class="card-t">Event Timeline</span></div><div class="card-b">
+            <div class="tl-item"><div class="tl-left"><div class="tl-dot r"></div><div class="tl-line"></div></div><div class="tl-right"><div class="tl-time">14:32:18</div><div class="tl-event"><strong>Kidnapping confirmed</strong> — suspect dragging victim</div><div class="tl-cam">CAM-01 · Platform Entry · 96%</div></div></div>
+            <div class="tl-item"><div class="tl-left"><div class="tl-dot a"></div><div class="tl-line"></div></div><div class="tl-right"><div class="tl-time">14:28:22</div><div class="tl-event"><strong>Bag snatched</strong> — suspect running eastbound</div><div class="tl-cam">CAM-04 · Side Passage · 92%</div></div></div>
+            <div class="tl-item"><div class="tl-left"><div class="tl-dot r"></div><div class="tl-line"></div></div><div class="tl-right"><div class="tl-time">14:26:11</div><div class="tl-event"><strong>Child separation</strong> — adult coercion detected</div><div class="tl-cam">CAM-05 · Tunnel Exit · 95%</div></div></div>
+            <div class="tl-item"><div class="tl-left"><div class="tl-dot a"></div><div class="tl-line"></div></div><div class="tl-right"><div class="tl-time">14:29:47</div><div class="tl-event"><strong>Harassment</strong> — two suspects cornering victim</div><div class="tl-cam">CAM-03 · Main Hall · 84%</div></div></div>
+            <div class="tl-item"><div class="tl-left"><div class="tl-dot g"></div></div><div class="tl-right"><div class="tl-time">13:00:00</div><div class="tl-event"><strong>Session start</strong> — AI monitoring online</div><div class="tl-cam">SYSTEM</div></div></div>
+          </div></div>
+          <div class="card"><div class="card-h"><span class="card-t">Behaviour Analysis</span></div><div class="card-b">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:10px;color:var(--text2)">Forced Movement</span><div style="display:flex;align-items:center;gap:7px"><div class="prog-bg" style="width:110px"><div class="prog-fill" style="width:96%;background:var(--red)"></div></div><span style="font-family:var(--mono);font-size:9px;color:var(--red)">96%</span></div></div>
+              <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:10px;color:var(--text2)">Running Gait</span><div style="display:flex;align-items:center;gap:7px"><div class="prog-bg" style="width:110px"><div class="prog-fill" style="width:92%;background:var(--orange)"></div></div><span style="font-family:var(--mono);font-size:9px;color:var(--orange)">92%</span></div></div>
+              <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:10px;color:var(--text2)">Cornering Pattern</span><div style="display:flex;align-items:center;gap:7px"><div class="prog-bg" style="width:110px"><div class="prog-fill" style="width:84%;background:var(--amber)"></div></div><span style="font-family:var(--mono);font-size:9px;color:var(--amber)">84%</span></div></div>
+              <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:10px;color:var(--text2)">Pocket Reach</span><div style="display:flex;align-items:center;gap:7px"><div class="prog-bg" style="width:110px"><div class="prog-fill" style="width:89%;background:var(--purple)"></div></div><span style="font-family:var(--mono);font-size:9px;color:var(--purple)">89%</span></div></div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+
+      <!-- MAP -->
+      <div class="page" id="page-map">
+        <div class="section-title">Surveillance Map — Camera Network</div>
+        <div class="g2" style="margin-bottom:10px">
+          <div class="stat-card g"><div class="stat-label">Cameras Online</div><div class="stat-val g">8</div></div>
+          <div class="stat-card r"><div class="stat-label">Active Threats</div><div class="stat-val r">4</div></div>
+        </div>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:9px;overflow:hidden;position:relative;height:360px">
+          <div id="mapSvg" style="width:100%;height:100%"></div>
+          <div style="position:absolute;bottom:10px;left:10px;background:rgba(6,13,26,.9);border:1px solid var(--border);border-radius:7px;padding:7px 11px;font-size:9px;font-family:var(--mono);color:var(--text2)">
+            <div style="display:flex;align-items:center;gap:5px;margin-bottom:2px"><div style="width:7px;height:7px;border-radius:50%;background:var(--green)"></div>Normal</div>
+            <div style="display:flex;align-items:center;gap:5px;margin-bottom:2px"><div style="width:7px;height:7px;border-radius:50%;background:var(--red)"></div>Alert</div>
+            <div style="display:flex;align-items:center;gap:5px"><div style="width:7px;height:7px;border-radius:50%;background:var(--amber)"></div>High Risk</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- REPORTS -->
+      <div class="page" id="page-reports">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:10px">
+          <div class="section-title" style="margin-bottom:0">Incident Reports — 18 Generated</div>
+          <button class="btn b" style="margin-left:auto">+ New Report</button>
+          <button class="btn gh">Export All PDF</button>
+        </div>
+        <div style="background:var(--panel2);border:1px solid var(--border);border-radius:7px;padding:12px;margin-bottom:7px;cursor:pointer" onclick="showModal('report')"><div style="font-size:9px;font-family:var(--mono);color:var(--blue);margin-bottom:3px">RPT-2026-0847 · AUTO-GENERATED · AI VERIFIED</div><div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:5px">Kidnapping Alert — Victim Dragged · CAM-01 Platform Entry</div><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:9px;color:var(--text3);font-family:var(--mono)">15 Mar 2026 14:32:18 · Confidence 96%</div><div style="display:flex;gap:5px"><span class="risk-badge critical">CRITICAL</span><button class="btn b" style="padding:2px 7px;font-size:9px">View</button><button class="btn gh" style="padding:2px 7px;font-size:9px">PDF</button></div></div></div>
+        <div style="background:var(--panel2);border:1px solid var(--border);border-radius:7px;padding:12px;margin-bottom:7px;cursor:pointer"><div style="font-size:9px;font-family:var(--mono);color:var(--blue);margin-bottom:3px">RPT-2026-0846 · AUTO-GENERATED</div><div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:5px">Bag Snatching — Suspect Fleeing · CAM-04 Side Passage</div><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:9px;color:var(--text3);font-family:var(--mono)">15 Mar 2026 14:28:22 · Confidence 92%</div><div style="display:flex;gap:5px"><span class="risk-badge critical">CRITICAL</span><button class="btn b" style="padding:2px 7px;font-size:9px">View</button><button class="btn gh" style="padding:2px 7px;font-size:9px">PDF</button></div></div></div>
+        <div style="background:var(--panel2);border:1px solid var(--border);border-radius:7px;padding:12px;margin-bottom:7px;cursor:pointer"><div style="font-size:9px;font-family:var(--mono);color:var(--blue);margin-bottom:3px">RPT-2026-0845 · AUTO-GENERATED</div><div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:5px">Harassment — Two Suspects / One Victim · CAM-03 Main Hall</div><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:9px;color:var(--text3);font-family:var(--mono)">15 Mar 2026 14:29:47 · Confidence 84%</div><div style="display:flex;gap:5px"><span class="risk-badge high">HIGH</span><button class="btn b" style="padding:2px 7px;font-size:9px">View</button><button class="btn gh" style="padding:2px 7px;font-size:9px">PDF</button></div></div></div>
+      </div>
+
+      <!-- EVIDENCE -->
+      <div class="page" id="page-evidence">
+        <div class="section-title">Evidence Management</div>
+        <div class="g2">
+          <div>
+            <div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:7px;font-family:var(--mono)">📁 CASE #2847 — KIDNAPPING</div>
+            <div class="ev-item"><div style="width:34px;height:34px;border-radius:7px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">📷</div><div><div class="ev-name">snapshot_cam01_kidnap_143218.jpg</div><div class="ev-meta">CAM-01 · 14:32:18 · Kidnapping frame</div></div><div style="margin-left:auto;font-size:9px;color:var(--text3);font-family:var(--mono)">2.4 MB</div></div>
+            <div class="ev-item"><div style="width:34px;height:34px;border-radius:7px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">🎬</div><div><div class="ev-name">footage_cam01_kidnap_clip.mp4</div><div class="ev-meta">CAM-01 · 2min kidnap sequence</div></div><div style="margin-left:auto;font-size:9px;color:var(--text3);font-family:var(--mono)">48 MB</div></div>
+            <div class="ev-item"><div style="width:34px;height:34px;border-radius:7px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">📷</div><div><div class="ev-name">snapshot_cam04_stolen_142822.jpg</div><div class="ev-meta">CAM-04 · 14:28:22 · Bag snatching</div></div><div style="margin-left:auto;font-size:9px;color:var(--text3);font-family:var(--mono)">1.8 MB</div></div>
+            <div class="ev-item"><div style="width:34px;height:34px;border-radius:7px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">📄</div><div><div class="ev-name">ai_detection_log_20260315.json</div><div class="ev-meta">All detection metadata today</div></div><div style="margin-left:auto;font-size:9px;color:var(--text3);font-family:var(--mono)">128 KB</div></div>
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:7px;font-family:var(--mono)">📁 THEFT / HARASSMENT EVIDENCE</div>
+            <div class="ev-item"><div style="width:34px;height:34px;border-radius:7px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">🎬</div><div><div class="ev-name">footage_cam02_theft_143104.mp4</div><div class="ev-meta">CAM-02 · Pickpocket sequence</div></div><div style="margin-left:auto;font-size:9px;color:var(--text3);font-family:var(--mono)">22 MB</div></div>
+            <div class="ev-item"><div style="width:34px;height:34px;border-radius:7px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">📷</div><div><div class="ev-name">snapshot_cam03_harass_142947.jpg</div><div class="ev-meta">CAM-03 · Harassment frame</div></div><div style="margin-left:auto;font-size:9px;color:var(--text3);font-family:var(--mono)">2.1 MB</div></div>
+            <div class="ev-item"><div style="width:34px;height:34px;border-radius:7px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">📊</div><div><div class="ev-name">incident_report_RPT-2026-0847.pdf</div><div class="ev-meta">Auto-generated report</div></div><div style="margin-left:auto;font-size:9px;color:var(--text3);font-family:var(--mono)">512 KB</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI ASSISTANT -->
+      <div class="page" id="page-assistant">
+        <div class="section-title">AI Security Assistant</div>
+        <div class="g2">
+          <div>
+            <div class="chat-area">
+              <div class="chat-msgs scrollable" id="chatMsgs"><div class="chat-msg bot"><strong>Sentinel AI Assistant online.</strong><br>I have access to all 8 camera feeds, threat detections, suspect profiles, and case files. How can I assist?</div></div>
+              <div class="chat-presets">
+                <div class="chat-preset" onclick="sendPreset('Show current threats on all cameras')">Current threats</div>
+                <div class="chat-preset" onclick="sendPreset('Where was the kidnapping detected?')">Kidnapping location</div>
+                <div class="chat-preset" onclick="sendPreset('Which camera has theft activity?')">Theft camera</div>
+                <div class="chat-preset" onclick="sendPreset('Show harassment alert details')">Harassment details</div>
+                <div class="chat-preset" onclick="sendPreset('Who is the main suspect?')">Main suspect</div>
+              </div>
+              <div class="chat-input-row">
+                <input class="chat-in" id="chatIn" placeholder="Ask about threats, cameras, suspects..." onkeydown="if(event.key==='Enter')sendChat()">
+                <button class="chat-send" onclick="sendChat()">SEND →</button>
+              </div>
+            </div>
+          </div>
+          <div class="card"><div class="card-h"><span class="card-t">AI Capabilities</span></div><div class="card-b"><div style="display:flex;flex-direction:column;gap:5px;font-size:10px;color:var(--text2);line-height:1.7"><div>🎥 Monitor all 8 live camera feeds</div><div>⚠ Detect kidnapping, theft, harassment, stolen</div><div>🔍 Query suspect and victim databases</div><div>📍 Track suspect movement across cameras</div><div>📊 Analyze AI threat confidence scores</div><div>📋 Generate incident reports automatically</div><div>🗺 Identify high-risk zones and times</div></div></div></div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="page" id="page-settings">
+        <div class="section-title">System Settings</div>
+        <div class="g2">
+          <div class="card"><div class="card-h"><span class="card-t">AI Detection</span></div><div class="card-b">
+            <div style="display:flex;flex-direction:column;gap:11px">
+              <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--text2)">YOLOv8 Threshold</span><div style="display:flex;align-items:center;gap:7px"><input type="range" min="50" max="99" value="65" oninput="this.nextElementSibling.textContent=this.value+'%'" style="width:90px"><span style="font-family:var(--mono);font-size:10px;color:var(--blue);min-width:32px">65%</span></div></div>
+              <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--text2)">Face Recognition</span><div style="display:flex;align-items:center;gap:7px"><input type="range" min="50" max="99" value="80" oninput="this.nextElementSibling.textContent=this.value+'%'" style="width:90px"><span style="font-family:var(--mono);font-size:10px;color:var(--blue);min-width:32px">80%</span></div></div>
+              <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--text2)">Threat Sensitivity</span><div style="display:flex;align-items:center;gap:7px"><input type="range" min="1" max="10" value="8" oninput="this.nextElementSibling.textContent=this.value+'/10'" style="width:90px"><span style="font-family:var(--mono);font-size:10px;color:var(--blue);min-width:36px">8/10</span></div></div>
+            </div>
+          </div></div>
+          <div class="card"><div class="card-h"><span class="card-t">System Status</span></div><div class="card-b">
+            <div style="display:flex;flex-direction:column;gap:7px">
+              <div style="display:flex;justify-content:space-between;font-size:10px"><span style="color:var(--text2)">YOLOv8 Model</span><span style="color:var(--green);font-family:var(--mono)">LOADED v8.2</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:10px"><span style="color:var(--text2)">Threat Detection AI</span><span style="color:var(--green);font-family:var(--mono)">ACTIVE</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:10px"><span style="color:var(--text2)">8-Camera Renderer</span><span style="color:var(--green);font-family:var(--mono)">RUNNING</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:10px"><span style="color:var(--text2)">MongoDB</span><span style="color:var(--green);font-family:var(--mono)">CONNECTED</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:10px"><span style="color:var(--text2)">FastAPI Backend</span><span style="color:var(--green);font-family:var(--mono)">PORT 8000</span></div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+
+    </div><!-- end content -->
+  </div><!-- end main -->
+</div><!-- end app -->
+
+<!-- MODAL -->
+<div id="modalOv" style="display:none" class="modal-ov" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box"><div class="modal-hdr"><div class="modal-title" id="modalTitle">Details</div><button class="modal-close" onclick="closeModal()">✕</button></div><div class="modal-body" id="modalBody"></div></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="cctv-engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
